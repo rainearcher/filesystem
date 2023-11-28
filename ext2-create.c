@@ -329,7 +329,16 @@ void write_inode_bitmap(int fd)
 	}
 
 	// TODO It's all yours
-	u8 map_value[BLOCK_SIZE];
+	u8 map_value[BLOCK_SIZE] = {0};
+	mark_bitmap_entry_as_used(map_value, EXT2_BAD_INO);
+	mark_bitmap_entry_as_used(map_value, EXT2_ROOT_INO);
+	for (int i = EXT2_ROOT_INO + 1; i < EXT2_GOOD_OLD_FIRST_INO; i++)
+	{
+		mark_bitmap_entry_as_used(map_value, i);
+	}
+	mark_bitmap_entry_as_used(map_value, LOST_AND_FOUND_INO);
+	mark_bitmap_entry_as_used(map_value, HELLO_WORLD_INO);
+	mark_bitmap_entry_as_used(map_value, HELLO_INO);
 
 	if (write(fd, map_value, BLOCK_SIZE) != BLOCK_SIZE)
 	{
