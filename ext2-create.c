@@ -265,7 +265,7 @@ void write_block_group_descriptor_table(int fd) {
 	block_group_descriptor.bg_inode_table = INODE_TABLE_BLOCKNO;
 	block_group_descriptor.bg_free_blocks_count = NUM_FREE_BLOCKS;
 	block_group_descriptor.bg_free_inodes_count = NUM_FREE_INODES;
-	block_group_descriptor.bg_used_dirs_count = EXT2_NDIR_BLOCKS;
+	block_group_descriptor.bg_used_dirs_count = 2;
 
 	ssize_t size = sizeof(block_group_descriptor);
 	if (write(fd, &block_group_descriptor, size) != size) {
@@ -338,7 +338,11 @@ void write_inode_bitmap(int fd)
 	}
 	mark_bitmap_entry_as_used(map_value, LOST_AND_FOUND_INO);
 	mark_bitmap_entry_as_used(map_value, HELLO_WORLD_INO);
-	mark_bitmap_entry_as_used(map_value, HELLO_INO);
+	mark_bitmap_entry_as_used(map_value, HELLO_INO);	
+	for (int i = NUM_INODES + 1; i <= (BLOCK_SIZE << 3); i++)
+	{
+		mark_bitmap_entry_as_used(map_value, i);
+	}
 
 	if (write(fd, map_value, BLOCK_SIZE) != BLOCK_SIZE)
 	{
@@ -438,16 +442,16 @@ void write_hello_symlink_inode(int fd, u32 current_time)
 	                              | EXT2_S_IRGRP
 	                              | EXT2_S_IROTH;
 	hello.i_uid = 1000;
-	hello.i_size = 12;
+	hello.i_size = 11;
 	hello.i_atime = current_time;
 	hello.i_ctime = current_time;
 	hello.i_mtime = current_time;
 	hello.i_dtime = 0;
 	hello.i_gid = 1000;
 	hello.i_links_count = 1;
-	hello.i_blocks = 2; /* These are oddly 512 blocks */
+	hello.i_blocks = 0; /* These are oddly 512 blocks */
 	strcpy((char *)hello.i_block, "hello-world");
-	write_inode(fd, HELLO_WORLD_INO, &hello);
+	write_inode(fd, HELLO_INO, &hello);
 }
 
 void write_inode_table(int fd) {
