@@ -273,6 +273,19 @@ void write_block_group_descriptor_table(int fd) {
 	}
 }
 
+void mark_bitmap_entry_as_used(u8 *bitmap, int entry)
+{
+	int ind = (entry - 1) / 8;
+	int bit = (entry - 1) % 8;
+	bitmap[ind] |= 1 << bit;
+}
+
+unsigned int get_inode_table_size()
+{
+	unsigned int inodes_per_block = BLOCK_SIZE / sizeof(struct ext2_inode);
+	return (NUM_INODES + inodes_per_block - 1) / inodes_per_block;
+}
+
 void write_block_bitmap(int fd)
 {
 	off_t off = lseek(fd, BLOCK_OFFSET(BLOCK_BITMAP_BLOCKNO), SEEK_SET);
@@ -281,9 +294,26 @@ void write_block_bitmap(int fd)
 		errno_exit("lseek");
 	}
 
-	// TODO It's all yours
-	u8 map_value[BLOCK_SIZE];
+	u8 map_value[BLOCK_SIZE] = {0};
+	mark_bitmap_entry_as_used(map_value, SUPERBLOCK_BLOCKNO);
+	mark_bitmap_entry_as_used(map_value, BLOCK_GROUP_DESCRIPTOR_BLOCKNO);
+	mark_bitmap_entry_as_used(map_value, BLOCK_BITMAP_BLOCKNO);
+	mark_bitmap_entry_as_used(map_value, INODE_BITMAP_BLOCKNO);
 
+	for (size_t i = 0; i != get_inode_table_size(); i++)
+	{
+		mark_bitmap_entry_as_used(map_value, INODE_TABLE_BLOCKNO + i);
+	}
+
+	mark_bitmap_entry_as_used(map_value, ROOT_DIR_BLOCKNO);
+	mark_bitmap_entry_as_used(map_value, LOST_AND_FOUND_DIR_BLOCKNO);
+	mark_bitmap_entry_as_used(map_value, HELLO_WORLD_FILE_BLOCKNO);
+	
+	for (int i = BLOCK_SIZE; i <= (BLOCK_SIZE << 3); i++)
+	{
+		mark_bitmap_entry_as_used(map_value, i);
+	}
+	
 	if (write(fd, map_value, BLOCK_SIZE) != BLOCK_SIZE)
 	{
 		errno_exit("write");
