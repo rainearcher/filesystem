@@ -535,7 +535,13 @@ void write_lost_and_found_dir_block(int fd) {
 
 void write_hello_world_file_block(int fd)
 {
-	// TODO It's all yours
+	off_t off = BLOCK_OFFSET(HELLO_WORLD_FILE_BLOCKNO);
+	off = lseek(fd, off, SEEK_SET);
+	if (off == -1) {
+		errno_exit("lseek");
+	}
+	char hello_world[13] = "Hello world\n";
+	write(fd, hello_world, 12);
 }
 
 int main(int argc, char *argv[]) {
