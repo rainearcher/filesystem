@@ -450,7 +450,7 @@ void write_hello_symlink_inode(int fd, u32 current_time)
 	hello.i_gid = 1000;
 	hello.i_links_count = 1;
 	hello.i_blocks = 0; /* These are oddly 512 blocks */
-	strcpy((char *)hello.i_block, "hello-world");
+	memcpy(hello.i_block, "hello-world", 11);
 	write_inode(fd, HELLO_INO, &hello);
 }
 
@@ -541,7 +541,10 @@ void write_hello_world_file_block(int fd)
 		errno_exit("lseek");
 	}
 	char hello_world[13] = "Hello world\n";
-	write(fd, hello_world, 12);
+	if (write(fd, hello_world, 12) != 12)
+	{
+		errno_exit("write");
+	}
 }
 
 int main(int argc, char *argv[]) {
